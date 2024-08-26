@@ -8,44 +8,9 @@ from timeit import default_timer as timer
 import matplotlib.pyplot as plt
 
 
-def plot_results(throughput_data, latency_data):
-    Ns = [data[0] for data in throughput_data]
-
-    # Calculate average throughput and latency
-    avg_throughput = [(data[1] + data[2] + data[3]) / 3 for data in throughput_data]
-    avg_latency = [(data[1] + data[3] + data[5]) / 3 for data in latency_data]
-
-    plt.figure(figsize=(12, 6))
-
-    # Plot average throughput vs. N
-    plt.subplot(1, 2, 1)
-    plt.plot(Ns, avg_throughput, label='Average Throughput', marker='o')
-    plt.xlabel('Number of Data Blocks (N)')
-    plt.xticks(list(range(500, 5500, 500)))  # Set X-axis intervals to 500
-    plt.ylabel('Throughput (requests/sec)')
-    plt.title('Average Throughput vs. N')
-    plt.legend()
-    plt.grid(True)
-
-    # Plot average latency vs. throughput
-    plt.subplot(1, 2, 2)
-    plt.plot(avg_throughput, avg_latency, label='Average Latency', marker='o')
-    plt.xlabel('Throughput (requests/sec)')
-    plt.ylabel('Latency (sec)')
-    plt.title('Average Latency vs. Throughput')
-    plt.legend()
-    plt.grid(True)
-
-    plt.tight_layout()
-    plt.show()
-
-
-# Running the test and plotting the results
-
-
 def test1():
     data = {}
-    for N in [4, 10, 50, 100, 300, 500, 700, 1000]:
+    for N in [10, 30, 50, 100, 300, 500, 700]:
         print('--------------------')
         print(f'N = {N}\n')
         tree_height = max(0, ceil(log2(N)) - 1)  # it was proven that this is sufficient in 3.2
@@ -65,7 +30,7 @@ def test1():
             r = client.retrieve_data(server, index)
             total_requests += 1
             if r != random_strings[index]:
-                print("wrong retrive")
+                print("wrong retrieve")
         for index in range(N):
             client.delete_data(server, index)
             total_requests += 1
@@ -87,7 +52,7 @@ def plot(data):
     plt.subplot(1, 2, 1)
     plt.plot(Ns, avg_throughput, label='Average Throughput', marker='o')
     plt.xlabel('Number of Data Blocks (N)')
-    plt.xticks(list(range(0, 1001, 100)))  # Set X-axis intervals to 500
+    # plt.xticks(list(range(0, max(Ns)+1, 100)))  # Set X-axis intervals to 500
     plt.ylabel('Throughput (requests/sec)')
     plt.title('Average Throughput vs. N')
     plt.legend()
@@ -101,11 +66,9 @@ def plot(data):
     plt.legend()
     plt.grid(True)
 
-
     plt.tight_layout()
     plt.show()
 
 
 if __name__ == '__main__':
-    data = test1()
-    plot(data)
+    plot(test1())
