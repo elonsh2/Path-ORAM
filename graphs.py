@@ -1,16 +1,52 @@
+import queue
 import random
 import string
+import threading
 from math import ceil, log2
+from time import sleep
+
 from print_color import print
 from Client import Client
 from Server import Server
 from timeit import default_timer as timer
 import matplotlib.pyplot as plt
+from AscendClient import AscendClient
 
-
-def test1():
+def benchmark_Ascend(request_queue):
     data = {}
-    for N in [10, 30, 50, 100, 300, 500, 700]:
+    for N in [2]:
+        print('--------------------')
+        print(f'N = {N}\n')
+        tree_height = max(0, ceil(log2(N)) - 1)  # it was proven that this is sufficient in 3.2
+        num_of_leaves = 2 ** tree_height
+        tree_size = (2 * num_of_leaves) - 1
+        server = Server(tree_size)
+
+        client = Client(N, server, True)
+        ascend_client = AscendClient(N, client, server, request_queue)
+        random_strings = [''.join(random.choices(string.ascii_uppercase + string.digits, k=4)) for _ in
+                          range(N)]
+        total_requests = 0
+        timer_start = timer()
+        for index in range(N):
+            sleep(0.1)
+            request_queue.put(('store',index, random_strings[index]))
+            total_requests += 1
+        for index in range(N):
+            sleep(0.1)
+            request_queue.put(('retrieve',index, None))
+            total_requests += 1
+        timer_end = timer()
+        total_time = timer_end - timer_start
+        avg_request_time = total_time / total_requests
+        Throughput = total_requests / total_time
+        data[N] = (avg_request_time, Throughput)
+    return data
+
+
+def benchmark_default():
+    data = {}
+    for N in [10, 30, 50]:
         print('--------------------')
         print(f'N = {N}\n')
         tree_height = max(0, ceil(log2(N)) - 1)  # it was proven that this is sufficient in 3.2
@@ -71,4 +107,12 @@ def plot(data):
 
 
 if __name__ == '__main__':
-    plot(test1())
+    request_queue = queue.Queue()
+
+    # Start the benchmark thread
+    benchmark_thread = threading.Thread(target=benchmark_Ascend, args=(request_queue,))
+    benchmark_thread.start()
+
+    benchmark_thread.join()
+    # plot(benchmark_Ascend())
+    # plot(benchmark_default())

@@ -2,6 +2,7 @@ import hashlib
 from math import ceil, log2
 import random
 from typing import Tuple, List
+from enum import Enum
 
 from Crypto import Random
 from Crypto.Hash import HMAC, SHA256

@@ -96,7 +96,7 @@ def handle_print_tree(server):
     server.tree.print_tree()
 
 
-def demo2():
+def demo2(mode):
     error = 0
     num_of_tests = random.randint(5, 15)
     print(f"Number of tests to run: {num_of_tests}")
@@ -110,7 +110,7 @@ def demo2():
         num_of_leaves = 2 ** tree_height
         tree_size = (2 * num_of_leaves) - 1
         server = Server(tree_size=tree_size)
-        client = Client(num_of_files=num_of_blocks, server=server)
+        client = Client(num_of_files=num_of_blocks, server=server, mode=mode)
         # Access data from blocks
         for i in range(num_of_blocks):
             data = client.retrieve_data(server, i)
