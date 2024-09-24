@@ -359,6 +359,7 @@ class Client:
         :param data: None if called as API call, new data if called from store_data API call
         :return: requested data.
         """
+
         if data_id in self.position_map:
             self.retrieve_data(server, data_id, data)
             return True

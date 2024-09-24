@@ -1,6 +1,7 @@
 import queue
 import random
 import string
+import sys
 import threading
 from math import ceil, log2
 from time import sleep
@@ -12,9 +13,12 @@ from timeit import default_timer as timer
 import matplotlib.pyplot as plt
 from AscendClient import AscendClient
 
+upper_time = 0.1
+lower_time = 0.002
+
 def benchmark_Ascend(request_queue):
     data = {}
-    for N in [2]:
+    for N in [100]:
         print('--------------------')
         print(f'N = {N}\n')
         tree_height = max(0, ceil(log2(N)) - 1)  # it was proven that this is sufficient in 3.2
@@ -29,24 +33,29 @@ def benchmark_Ascend(request_queue):
         total_requests = 0
         timer_start = timer()
         for index in range(N):
-            sleep(0.1)
+            # sleep(2)
             request_queue.put(('store',index, random_strings[index]))
             total_requests += 1
         for index in range(N):
-            sleep(0.1)
+            # sleep(2)
             request_queue.put(('retrieve',index, None))
             total_requests += 1
+        while not request_queue.empty():
+            sleep(0.01)
         timer_end = timer()
         total_time = timer_end - timer_start
         avg_request_time = total_time / total_requests
         Throughput = total_requests / total_time
         data[N] = (avg_request_time, Throughput)
-    return data
+        print(f"N = {N}, avg_request_time = {avg_request_time}, Throughput = {Throughput}")
+        ascend_client.stop()  # Stop the AscendClient thread after finishing the loop
+    plot(data)
+
 
 
 def benchmark_default():
     data = {}
-    for N in [10, 30, 50]:
+    for N in [100]:
         print('--------------------')
         print(f'N = {N}\n')
         tree_height = max(0, ceil(log2(N)) - 1)  # it was proven that this is sufficient in 3.2
@@ -60,21 +69,19 @@ def benchmark_default():
         total_requests = 0
         timer_start = timer()
         for index in range(N):
+            # sleep(0.05)
             client.store_data(server, index, random_strings[index])
             total_requests += 1
         for index in range(N):
-            r = client.retrieve_data(server, index)
-            total_requests += 1
-            if r != random_strings[index]:
-                print("wrong retrieve")
-        for index in range(N):
-            client.delete_data(server, index)
+            # sleep(0.05)
+            client.retrieve_data(server, index)
             total_requests += 1
         timer_end = timer()
         total_time = timer_end - timer_start
         avg_request_time = total_time / total_requests
         Throughput = total_requests / total_time
         data[N] = (avg_request_time, Throughput)
+        print(f"N = {N}, avg_request_time = {avg_request_time}, Throughput = {Throughput}")
     return data
 
 
@@ -108,11 +115,8 @@ def plot(data):
 
 if __name__ == '__main__':
     request_queue = queue.Queue()
-
-    # Start the benchmark thread
     benchmark_thread = threading.Thread(target=benchmark_Ascend, args=(request_queue,))
     benchmark_thread.start()
-
     benchmark_thread.join()
-    # plot(benchmark_Ascend())
-    # plot(benchmark_default())
+
+    plot(benchmark_default())
