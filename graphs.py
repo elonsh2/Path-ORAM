@@ -15,10 +15,11 @@ from AscendClient import AscendClient
 
 upper_time = 0.1
 lower_time = 0.002
+N_list = [10,20,30,50,80,100]
 
-def benchmark_Ascend(request_queue):
+def benchmark_Ascend(request_queue, result_queue):
     data = {}
-    for N in [100]:
+    for N in N_list:
         print('--------------------')
         print(f'N = {N}\n')
         tree_height = max(0, ceil(log2(N)) - 1)  # it was proven that this is sufficient in 3.2
@@ -33,7 +34,7 @@ def benchmark_Ascend(request_queue):
         total_requests = 0
         timer_start = timer()
         for index in range(N):
-            # sleep(2)
+            sleep(0.02)
             request_queue.put(('store',index, random_strings[index]))
             total_requests += 1
         for index in range(N):
@@ -46,16 +47,17 @@ def benchmark_Ascend(request_queue):
         total_time = timer_end - timer_start
         avg_request_time = total_time / total_requests
         Throughput = total_requests / total_time
-        data[N] = (avg_request_time, Throughput)
+        data[N] = (avg_request_time, Throughput, ascend_client.dummy_request_count)
         print(f"N = {N}, avg_request_time = {avg_request_time}, Throughput = {Throughput}")
         ascend_client.stop()  # Stop the AscendClient thread after finishing the loop
-    plot(data)
+
+    result_queue.put(data)
 
 
 
 def benchmark_default():
     data = {}
-    for N in [100]:
+    for N in N_list:
         print('--------------------')
         print(f'N = {N}\n')
         tree_height = max(0, ceil(log2(N)) - 1)  # it was proven that this is sufficient in 3.2
@@ -85,38 +87,55 @@ def benchmark_default():
     return data
 
 
-def plot(data):
-    Ns = list(data.keys())
-    avg_throughput = [data[N][1] for N in Ns]
-    avg_latency = [data[N][0] for N in Ns]
-    plt.figure(figsize=(12, 6))
+def plot(data_ascend, data_default):
+    Ns_ascend = list(data_ascend.keys())
+    avg_throughput_ascend = [data_ascend[N][1] for N in Ns_ascend]
 
-    # Plot average throughput vs. N
-    plt.subplot(1, 2, 1)
-    plt.plot(Ns, avg_throughput, label='Average Throughput', marker='o')
-    plt.xlabel('Number of Data Blocks (N)')
-    # plt.xticks(list(range(0, max(Ns)+1, 100)))  # Set X-axis intervals to 500
-    plt.ylabel('Throughput (requests/sec)')
-    plt.title('Average Throughput vs. N')
-    plt.legend()
-    plt.grid(True)
-    # Plot average latency vs. throughput
-    plt.subplot(1, 2, 2)
-    plt.plot(avg_throughput, avg_latency, label='Average Latency', marker='o')
-    plt.xlabel('Throughput (requests/sec)')
-    plt.ylabel('Latency (sec)')
-    plt.title('Average Latency vs. Throughput')
-    plt.legend()
-    plt.grid(True)
+    # Calculate real requests (N * 2) and dummy requests
+    real_requests_ascend = [N * 2 for N in Ns_ascend]
+    dummy_requests_ascend = [data_ascend[N][2] for N in Ns_ascend]  # Assuming dummy requests are in the 3rd index
 
+    # Get default data
+    Ns_default = list(data_default.keys())
+    avg_throughput_default = [data_default[N][1] for N in Ns_default]
+
+    # Create a figure with two subplots
+    fig, axs = plt.subplots(2, 1, figsize=(10, 12))
+
+    # Plot for Throughput vs. Number of Data Blocks
+    axs[0].plot(Ns_ascend, avg_throughput_ascend, label='Ascend Throughput', color='blue', marker='o')
+    axs[0].plot(Ns_default, avg_throughput_default, label='Default Throughput', color='orange', marker='o')
+    axs[0].set_xlabel('Number of Data Blocks (N)')
+    axs[0].set_ylabel('Throughput (requests/sec)')
+    axs[0].set_title('Throughput vs. Number of Data Blocks')
+    axs[0].legend()
+    axs[0].grid(True)
+
+    # Plot for Real Requests vs. Dummy Requests
+    axs[1].plot(Ns_ascend, real_requests_ascend, label='Real Requests (Ascend)', color='green', marker='x')
+    axs[1].plot(Ns_ascend, dummy_requests_ascend, label='Dummy Requests (Ascend)', color='red', marker='s')
+    axs[1].set_xlabel('Number of Data Blocks (N)')
+    axs[1].set_ylabel('Number of Requests')
+    axs[1].set_title('Real vs. Dummy Requests (Ascend)')
+    axs[1].legend()
+    axs[1].grid(True)
+
+    # Adjust layout and show the plots
     plt.tight_layout()
     plt.show()
 
 
 if __name__ == '__main__':
     request_queue = queue.Queue()
-    benchmark_thread = threading.Thread(target=benchmark_Ascend, args=(request_queue,))
+    result_queue = queue.Queue()
+    shared_data = {'empty_count': 0}  # Shared variable for counting empty occurrences
+    lock = threading.Lock()  # Lock for thread-safe access
+
+    benchmark_thread = threading.Thread(target=benchmark_Ascend, args=(request_queue, result_queue))
     benchmark_thread.start()
     benchmark_thread.join()
+    data_ascend = result_queue.get()
+    # print(f"Number of times queue was empty: {data_ascend[2]}")
 
-    plot(benchmark_default())
+    data_default = benchmark_default()
+    plot(data_ascend, data_default)

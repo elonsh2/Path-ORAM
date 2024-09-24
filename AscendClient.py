@@ -13,8 +13,9 @@ class AscendClient:
         self.server = server
         self.N = N
         self.client = client
-        self.rate = 0.00002
+        self.rate = 0.001
         self.request_queue = request_queue
+        self.dummy_request_count = 0
         self.running = True  # Flag to control the thread
         self.thread = threading.Thread(target=self.run)
         self.thread.start()
@@ -39,6 +40,7 @@ class AscendClient:
                     # print(f"Delete data at index {index}")
             except queue.Empty:
                 print("No requests in the queue")
+                self.dummy_request_count+=1
                 self.retrieve_data(0)
 
     def stop(self):
