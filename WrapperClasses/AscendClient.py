@@ -13,7 +13,7 @@ class AscendClient:
         self.server = server
         self.N = N
         self.client = client
-        self.rate = 0.001
+        self.rate = 0.1
         self.request_queue = request_queue
         self.dummy_request_count = 0
         self.running = True  # Flag to control the thread
@@ -30,16 +30,13 @@ class AscendClient:
                 if remaining_time > 0:
                     time.sleep(remaining_time)  # Wait for the remainder of the timeout
                 if operation == 'store':
-                    # print(f"Storing data at index {index}")
                     self.store_data(index, data)
                 elif operation == 'retrieve':
                     self.retrieve_data(index)
-                    # print(f"Retrieving data at index {index}")
                 elif operation == 'delete':
                     self.delete_data(index)
-                    # print(f"Delete data at index {index}")
+                self.request_queue.task_done()
             except queue.Empty:
-                print("No requests in the queue")
                 self.dummy_request_count+=1
                 self.retrieve_data(0)
 

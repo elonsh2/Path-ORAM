@@ -1,24 +1,25 @@
 import queue
 import random
 import string
-import sys
 import threading
 from math import ceil, log2
 from time import sleep
-
+from WrapperClasses.DefaultClient import DefaultClient
 from print_color import print
 from Client import Client
 from Server import Server
 from timeit import default_timer as timer
 import matplotlib.pyplot as plt
-from AscendClient import AscendClient
+from WrapperClasses.AscendClient import AscendClient
 
 upper_time = 0.1
-lower_time = 0.002
-N_list = [10,20,30,50,80,100]
+lower_time = 0.05
+N_list = [50,80,100,200,300,500]
+
 
 def benchmark_Ascend(request_queue, result_queue):
     data = {}
+    print('Ascend Mode:')
     for N in N_list:
         print('--------------------')
         print(f'N = {N}\n')
@@ -27,36 +28,35 @@ def benchmark_Ascend(request_queue, result_queue):
         tree_size = (2 * num_of_leaves) - 1
         server = Server(tree_size)
 
-        client = Client(N, server, True)
+        client = Client(N, server, False)
         ascend_client = AscendClient(N, client, server, request_queue)
         random_strings = [''.join(random.choices(string.ascii_uppercase + string.digits, k=4)) for _ in
                           range(N)]
         total_requests = 0
         timer_start = timer()
         for index in range(N):
-            sleep(0.02)
-            request_queue.put(('store',index, random_strings[index]))
+            sleep(random.uniform(lower_time, upper_time))
+            request_queue.put(('store', index, random_strings[index]))
             total_requests += 1
         for index in range(N):
-            # sleep(2)
-            request_queue.put(('retrieve',index, None))
+            sleep(random.uniform(lower_time, upper_time))
+            request_queue.put(('retrieve', index, None))
             total_requests += 1
-        while not request_queue.empty():
-            sleep(0.01)
+        request_queue.join()
         timer_end = timer()
         total_time = timer_end - timer_start
         avg_request_time = total_time / total_requests
         Throughput = total_requests / total_time
         data[N] = (avg_request_time, Throughput, ascend_client.dummy_request_count)
-        print(f"N = {N}, avg_request_time = {avg_request_time}, Throughput = {Throughput}")
+        print(f"Request per second = {Throughput}")
         ascend_client.stop()  # Stop the AscendClient thread after finishing the loop
-
+    print('--------------------')
     result_queue.put(data)
 
 
-
-def benchmark_default():
+def benchmark_default(request_queue, result_queue):
     data = {}
+    print('Default Mode:')
     for N in N_list:
         print('--------------------')
         print(f'N = {N}\n')
@@ -65,26 +65,32 @@ def benchmark_default():
         tree_size = (2 * num_of_leaves) - 1
 
         server = Server(tree_size)
-        client = Client(N, server, True)
+        client = Client(N, server, False)
+        default_client = DefaultClient(N, client, server, request_queue)
         random_strings = [''.join(random.choices(string.ascii_uppercase + string.digits, k=4)) for _ in
                           range(N)]
         total_requests = 0
         timer_start = timer()
         for index in range(N):
-            # sleep(0.05)
-            client.store_data(server, index, random_strings[index])
+            sleep(random.uniform(lower_time, upper_time))
+            request_queue.put(('store', index, random_strings[index]))
+            # default_client.store_data(index, random_strings[index])
             total_requests += 1
         for index in range(N):
-            # sleep(0.05)
-            client.retrieve_data(server, index)
+            sleep(random.uniform(lower_time, upper_time))
+            request_queue.put(('retrieve', index, None))
+            # default_client.retrieve_data(index)
             total_requests += 1
+        request_queue.join()
         timer_end = timer()
         total_time = timer_end - timer_start
         avg_request_time = total_time / total_requests
         Throughput = total_requests / total_time
         data[N] = (avg_request_time, Throughput)
-        print(f"N = {N}, avg_request_time = {avg_request_time}, Throughput = {Throughput}")
-    return data
+        print(f"Request per second = {Throughput}")
+        default_client.stop()
+    print('--------------------')
+    result_queue.put(data)
 
 
 def plot(data_ascend, data_default):
@@ -126,16 +132,22 @@ def plot(data_ascend, data_default):
 
 
 if __name__ == '__main__':
-    request_queue = queue.Queue()
-    result_queue = queue.Queue()
-    shared_data = {'empty_count': 0}  # Shared variable for counting empty occurrences
-    lock = threading.Lock()  # Lock for thread-safe access
+    request_queue_ascend = queue.Queue()
+    result_queue_ascend = queue.Queue()
+    request_queue_default = queue.Queue()
+    result_queue_default = queue.Queue()
 
-    benchmark_thread = threading.Thread(target=benchmark_Ascend, args=(request_queue, result_queue))
-    benchmark_thread.start()
-    benchmark_thread.join()
-    data_ascend = result_queue.get()
-    # print(f"Number of times queue was empty: {data_ascend[2]}")
 
-    data_default = benchmark_default()
+    benchmark_ascend_thread = threading.Thread(target=benchmark_Ascend,
+                                               args=(request_queue_ascend, result_queue_ascend))
+    benchmark_ascend_thread.start()
+    benchmark_ascend_thread.join()
+    data_ascend = result_queue_ascend.get()
+
+    benchmark_default_thread = threading.Thread(target=benchmark_default,
+                                                args=(request_queue_default, result_queue_default))
+    benchmark_default_thread.start()
+    benchmark_default_thread.join()
+    data_default = result_queue_default.get()
+
     plot(data_ascend, data_default)
