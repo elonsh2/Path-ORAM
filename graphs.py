@@ -252,8 +252,8 @@ if __name__ == '__main__':
     # data_default = result_queue_default.get()
     #
     # plot1(data_ascend, data_default)
-    request_queue = queue.Queue()
-    result_queue = queue.Queue()
+    # request_queue = queue.Queue()
+    # result_queue = queue.Queue()
 
     # # Start Ascend and Default clients in separate threads
     # ascend_thread = threading.Thread(target=benchmark_time_ascend, args=(request_queue, result_queue))
@@ -271,8 +271,8 @@ if __name__ == '__main__':
     # while not result_queue.empty():
     #     result_data.append(result_queue.get())
     #
-    ascend_tuple = ('Ascend', [i for i in range(61)], [20 + random.randint(-2, 2) for i in range(61)])
-    default_tuple = ('Ascend', [i for i in range(61)], [random.randint(3, 7) for i in range(20)] + [random.randint(40, 50) for i in range(21)] + [random.randint(3, 7) for i in range(20)])
-    result_data = [ascend_tuple, default_tuple]
-    # Plot the results
-    plot_results(result_data)
+    # ascend_tuple = ('Ascend', [i for i in range(61)], [20 + random.randint(-2, 2) for i in range(61)])
+    # default_tuple = ('Ascend', [i for i in range(61)], [random.randint(3, 7) for i in range(20)] + [random.randint(40, 50) for i in range(21)] + [random.randint(3, 7) for i in range(20)])
+    # result_data = [ascend_tuple, default_tuple]
+    # # Plot the results
+    # plot_results(result_data)

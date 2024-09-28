@@ -9,11 +9,11 @@ from timeit import default_timer as timer
 
 
 class AscendClient:
-    def __init__(self, N: int, client: Client, server: Server, request_queue: queue.Queue):
+    def __init__(self, N: int, client: Client, server: Server, request_queue: queue.Queue, rate: int):
         self.server = server
         self.N = N
         self.client = client
-        self.rate = 0.02  # Rate of requests per second
+        self.rate = rate  # Rate of requests per second
         self.request_queue = request_queue
         self.dummy_request_count = 0
         self.running = True  # Flag to control the thread
@@ -53,19 +53,3 @@ class AscendClient:
 
     def delete_data(self, index: int):
         self.client.delete_data(self.server, index)
-
-    def set_rate(self):
-        random_strings = [''.join(random.choices(string.ascii_uppercase + string.digits, k=4)) for _ in
-                          range(self.N)]
-        total_requests = 0
-        timer_start = timer()
-        for index in range(self.N):
-            self.client.store_data(self.server, index, random_strings[index])
-            total_requests += 1
-        for index in range(self.N):
-            self.client.retrieve_data(self.server, index)
-            total_requests += 1
-        timer_end = timer()
-        total_time = timer_end - timer_start
-        avg_request_time = total_time / total_requests
-        return avg_request_time
