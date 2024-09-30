@@ -3,7 +3,6 @@ import time
 from Client import Client
 from Server import Server
 from queue import Queue, Empty
-from print_color import print
 
 from WrapperClasses.DefaultClient import DefaultClient
 
@@ -12,7 +11,7 @@ class AscendClient(DefaultClient):
     def __init__(self, N: int, client: Client, server: Server, request_queue: Queue, result_queue: Queue, rate: float,
                  gui_update_callback):
         self.rate = rate  # Rate of requests per second
-        print(f'Running client with rate: {1 / self.rate} requests per second', color='blue')
+        print(f'Running client with rate: {1 / self.rate} requests per second')
         input('Press Enter to start client')
         self.dummy_request_count = 0
         self.last_dummy_count = 0  # Track dummy requests since the last real operation

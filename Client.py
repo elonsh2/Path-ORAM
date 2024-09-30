@@ -2,14 +2,11 @@ import hashlib
 from math import ceil, log2
 import random
 from typing import Tuple, List
-from enum import Enum
-
 from Crypto import Random
 from Crypto.Hash import HMAC, SHA256
 from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
 from Crypto.Util import Counter
-from print_color import print
 from Server import Server
 
 DATA_SIZE = 4
@@ -350,7 +347,7 @@ class Client:
             self.retrieve_data(server, data_id, data)
             return True
         if not data or len(data) != DATA_SIZE:
-            print(f'Error: data must be string of {DATA_SIZE} characters', color='red')
+            print(f'Error: data must be string of {DATA_SIZE} characters')
             return False
         if self.is_bucket_full(ROOT_ID, server):
             print("Root is full, probably because tree is overflowing. Storing data in stash")
@@ -412,7 +409,7 @@ class Client:
             self.stash.pop(data_id)
             return
         if data_id not in self.position_map:
-            print('Error: given data_id does not exist in server', color='red')
+            print('Error: given data_id does not exist in server')
             return
         leaf_of_data = self.position_map[data_id]
         path_buckets, path_ids = self.read_path(leaf_of_data, server)

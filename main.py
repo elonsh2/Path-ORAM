@@ -11,6 +11,3 @@ if __name__ == '__main__':
         sys.exit(1)
     demo = Demo(int(mode))
     demo.run()
-
-
-

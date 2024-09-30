@@ -1,5 +1,4 @@
 setuptools
-print_color
 pycryptodome
 typing
 matplotlib
