@@ -26,14 +26,12 @@ class Client:
     of the data content and access pattern. The client also supports encryption, decryption, and authentication of data.
     """
 
-    def __init__(self, num_of_files: int, server: Server, encrypt: bool = True):
+    def __init__(self, num_of_files: int, server: Server):
         """
         :param num_of_files: Number of files that the server needs to support
         :param server: Server object
-        :param encrypt: True for files decryption, false for not (for debug)
         """
         self.max_files = num_of_files
-        self.encrypt = encrypt
         self.tree_height = max(0, ceil(log2(num_of_files)) - 1)
         num_of_leaves = 2 ** self.tree_height
         self.tree_size = (2 * num_of_leaves) - 1
@@ -277,10 +275,6 @@ class Client:
         :param data: The actual data to be encrypted.
         :return: The encrypted data as a combination of nonce and ciphertext, or plain concatenation if encryption is not used.
         """
-        if not self.encrypt:
-            # If encryption is not used, simply concatenate the data ID and data
-            return str(data_id) + data
-
         # Generate a random nonce
         nonce = Random.get_random_bytes(8)
         counter = Counter.new(64, nonce)
@@ -307,14 +301,6 @@ class Client:
         :param data: The encrypted data to be decrypted. This can be a string or bytes.
         :return: A tuple containing the data ID (or identifier) and the actual data.
         """
-        if not self.encrypt:
-            # If encryption is not used, split the data to extract the ID and actual data
-            data_id = data[:-DATA_SIZE]
-            data = data[-DATA_SIZE:]
-            if data_id.isnumeric():
-                data_id = int(data_id)
-            return data_id, data
-
         # Decryption logic when encryption is used
         nonce_in_bytes, ciphertext_in_bytes, tag = data[:NONCE_SIZE], data[NONCE_SIZE:-KEY_SIZE], data[-KEY_SIZE:]
         # Verify HMAC of the ciphertext

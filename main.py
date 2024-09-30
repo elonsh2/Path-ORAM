@@ -2,16 +2,15 @@ import sys
 from demo import *
 
 if __name__ == '__main__':
-    option = sys.argv[1]
-    mode = sys.argv[2]
-    if mode == 'default':
-        mode = 1
-    elif mode == 'ascend':
-        mode = 2
+    if len(sys.argv) != 2:
+        print("Usage: main.py <mode>")
+        sys.exit(1)
+    mode = sys.argv[1]
+    if mode not in ['1', '2', '3']:
+        print('Invalid mode')
+        sys.exit(1)
+    demo = Demo(int(mode))
+    demo.run()
 
-    if option == 'demo':
-        demo1()
-    elif option == 'test':
-        demo2(mode)
-    else:
-        print("Enter valid arg.")
+
+
