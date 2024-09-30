@@ -2,6 +2,7 @@ import math
 from typing import List
 
 
+# noinspection PyMethodMayBeStatic
 class BinaryTree:
     class TreeNode:
         def __init__(self, index: int, data: List[str], parent=None):

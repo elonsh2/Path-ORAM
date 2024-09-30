@@ -1,5 +1,5 @@
 import sys
-from demo import *
+from Demo import *
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:

@@ -45,7 +45,7 @@ class Client:
         :param server: Instance of the Server class where data will be written.
         """
         for bucket_id in range(self.tree_size):
-            encrypted_bucket = [self.encrypt_data(DUMMY_ID, DUMMY_DATA) for i in range(self.bucket_size)]
+            encrypted_bucket = [self.encrypt_data(DUMMY_ID, DUMMY_DATA) for _ in range(self.bucket_size)]
             server.write_bucket_by_index(bucket_id, encrypted_bucket)
 
     def read_path(self, leaf_index: int, server: Server) -> Tuple[List[List[str]], List[int]]:

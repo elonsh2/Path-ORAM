@@ -48,7 +48,7 @@ class Demo:
                                         result_queue=self.result_queue, gui_update_callback=gui_update)
         if self.mode == 2:
             print('Running Ascend client')
-            rate = input('Enter rate of requests per second (it is recommended to pick 1-2): ')
+            rate = input('Enter rate of requests per second: ')
             if not rate.isnumeric():
                 print('Rate must be a positive number. Exiting.')
                 exit(1)

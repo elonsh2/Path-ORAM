@@ -64,6 +64,6 @@ class AscendClient(DefaultClient):
             if self.dummy_request_count != self.last_dummy_count:
                 self.gui_update_callback(f"Dummy requests made: {self.dummy_request_count}\n")
         # Schedule this method to run again after 1000 ms (1 second)
-        threading.Timer(2.0, self.schedule_dummy_update).start()
+        threading.Timer(1.0, self.schedule_dummy_update).start()
 
 
